@@ -255,6 +255,7 @@ def run(db_path: Path, min_year: int, voi_threshold: float) -> dict:
         "triage_stage": "abstract_triage",
     } for r in rows_out]
     out_path = DEFAULT_OUT_DIR / "triage_results.json"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(triage_export, indent=2), encoding="utf-8")
 
     conn.close()

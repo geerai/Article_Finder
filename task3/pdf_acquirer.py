@@ -34,12 +34,12 @@ import os
 import sqlite3
 from pathlib import Path
 
-from db_schema import open_db, DEFAULT_DB, log_transition
+from db_schema import open_db, DEFAULT_DB, DEFAULT_OUT_DIR, log_transition
 
 UA = "ArticleFinderTrack2/1.0 (mailto:track2-test@example.edu)"
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-PDF_DIR = REPO_ROOT / "task3" / "data" / "pdfs"
+PDF_DIR = DEFAULT_OUT_DIR / "pdfs"
 POLICY_CLEARANCE = REPO_ROOT / "policy_clearance.json"
 
 

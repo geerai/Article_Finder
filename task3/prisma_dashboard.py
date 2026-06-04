@@ -158,6 +158,7 @@ def main() -> None:
     funnel = compute(conn)
     conn.close()
 
+    args.out_dir.mkdir(parents=True, exist_ok=True)
     (args.out_dir / "prisma_funnel.json").write_text(
         json.dumps(funnel, indent=2), encoding="utf-8")
     html = HTML_TPL.format(db=args.db.name, **funnel)

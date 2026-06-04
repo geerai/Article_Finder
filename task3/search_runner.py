@@ -350,6 +350,7 @@ def run(queries_path: Path, backend: str, per_query: int, top_n: int,
 
     # Also dump raw search_results.json for the deliverable list
     out_json = DEFAULT_OUT_DIR / "search_results.json"
+    out_json.parent.mkdir(parents=True, exist_ok=True)
     summary_rows = conn.execute(
         "SELECT reference_id, doi, title_raw, discovered_via, discovered_query, "
         "gap_template_id, voi_score, snippet FROM article_references "

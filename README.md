@@ -4,6 +4,60 @@ Ports: Source-of-truth in `contracts/ports.json`.
 
 A comprehensive tool for managing and analyzing neuroarchitecture research literature.
 
+## Article Retrieval Product Readiness Quick Start
+
+This section describes the runnable Article Finder / Knowledge Atlas retrieval
+product surface: dependency setup, readiness checks, and the files that define
+the operational handoff from article discovery to downstream Article Eater
+processing. The implementation map lives in
+[`TRACK2_DELIVERABLE_MAP.md`](TRACK2_DELIVERABLE_MAP.md).
+
+`atlas_shared` must be supplied in one of three ways:
+
+```bash
+# Option 1: installed package
+cd /path/to/atlas_shared && pip install -e .
+
+# Option 2: explicit source path
+export KA_ATLAS_SHARED_SRC=/path/to/atlas_shared/src
+
+# Option 3: sibling checkout
+# Article_Finder, Knowledge_Atlas, and atlas_shared live under the same parent dir.
+```
+
+Use Python >= 3.10. On this local COGS160 checkout, the working interpreter is:
+
+```bash
+/Users/aigeer/COGS160/venv/bin/python
+```
+
+Run the deterministic Article Finder readiness checks from this repo root:
+
+```bash
+python3 -m pytest task3/tests_task2_task3.py -q
+python3 task3/tests_task2_task3.py
+python3 scripts/verify_track2_workflow.py
+```
+
+Run the Knowledge Atlas intake readiness check from the `Knowledge_Atlas` repo:
+
+```bash
+KA_ATLAS_SHARED_SRC=/path/to/atlas_shared/src python3 data/test_pdfs/validate_task1.py
+```
+
+Live network proof is opt-in:
+
+```bash
+T2_LIVE=1 python3 task3/tests_task2_task3.py
+```
+
+Product boundary: Article Finder currently writes and validates a local Article
+Eater handoff artefact. Real AE ingestion requires configuring `AE_INGEST_CMD`
+or `AE_INBOX` so Article Eater consumes the artefact and reports success through
+its own status surface. The current VOI score is a first-stage search-ranking
+heuristic; see [`TRACK2_VOI_COMPARISON.md`](TRACK2_VOI_COMPARISON.md) for the
+comparison to Article Eater's richer structural/epistemic VOI.
+
 ## What's New in v3.2.3
 
 ### 🔌 Zotero Integration (NEW)

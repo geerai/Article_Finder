@@ -42,9 +42,9 @@ import secrets
 import sqlite3
 from pathlib import Path
 
-from db_schema import DEFAULT_DB, REPO_ROOT, log_transition, open_db
+from db_schema import DEFAULT_DB, DEFAULT_OUT_DIR, log_transition, open_db
 
-HANDOFF_DIR = REPO_ROOT / "data" / "handoff"
+HANDOFF_DIR = DEFAULT_OUT_DIR / "handoff"
 
 # The documented local handoff schema (TASK3_CONTRACT.md §0.1).
 HANDOFF_SCHEMA_FIELDS = [

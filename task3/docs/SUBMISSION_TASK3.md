@@ -15,7 +15,7 @@
 | `db_schema.py` (article_references + lifecycle_transitions + v_acquisition_queue) | DONE | spec-compliant |
 | Contract docs | DONE | `task3/docs/TASK3_CONTRACT.md` |
 | End-to-end trace | DONE | `task3/docs/END_TO_END_TRACE.md` |
-| Automated tests | DONE | 44/44 PASS (47/47 with T2_LIVE=1) |
+| Automated tests | DONE | 51/51 PASS offline; live checks opt-in with `T2_LIVE=1` |
 | `.gitignore` blocks `policy_clearance.json`, `.env`, `*.serpapi` | DONE | committed |
 
 ---
@@ -55,7 +55,7 @@ python3 task3/run_pipeline.py --backend serpapi --enable-network \
     --per-query 5 --top-n 3
 
 # 4. Tests
-python3 task3/tests_task2_task3.py    # 44/44 PASS (47/47 with T2_LIVE=1)
+python3 task3/tests_task2_task3.py    # 51/51 PASS offline; live checks opt-in with T2_LIVE=1
 ```
 
 ---

@@ -8,6 +8,21 @@ should be able to read each section and run the listed test that proves it.
 
 ## 0. Substitutions & Limitations (read first)
 
+### 0.0 Dependency setup: `atlas_shared`
+
+Task 1 and the shared relevance/classification path depend on `atlas_shared`.
+It must be supplied in exactly one of these supported ways:
+
+1. installed import: `cd atlas_shared && pip install -e .`
+2. explicit source path: `KA_ATLAS_SHARED_SRC=/path/to/atlas_shared/src`
+3. sibling checkout: `Article_Finder`, `Knowledge_Atlas`, and `atlas_shared`
+   checked out under the same parent directory.
+
+The resolver order is installed package, then `$KA_ATLAS_SHARED_SRC`, then
+sibling checkout. The Article Finder Task 2/3 fixtures bundle enough
+constitutions/mechanisms for deterministic grading, but the full course
+classification catalogue still lives in `atlas_shared`.
+
 | Topic | Canonical | Substitute used | Justification |
 |---|---|---|---|
 | Lifecycle DB | `pipeline_lifecycle_full.db` (instructor-provided) | local `task3/data/pipeline_lifecycle_full.db` with the documented schema | The shipped file in `Knowledge_Atlas/data/ka_payloads/pipeline_lifecycle_full.db` is 0 bytes (verified). Local schema follows rubric §3A column-for-column; it's a drop-in replacement. |
@@ -17,7 +32,7 @@ should be able to read each section and run the listed test that proves it.
 | **Article Eater handoff sink** | `data/handoff/*.json` read by the Eater (rubric `ka_track2_setup.html:101-102`: *"The Finder writes a well-defined handoff artefact (`data/handoff/*.json`) that the Eater reads; the contract between them is the only thing Track 2 needs to honour."*) | local writer `task3/ae_handoff.py` → `task3/data/handoff/<reference_id>.json`, plus a dedup probe `probe_pdf_against_article_eater()` that queries the local `pdf_identity_inventory` / corpus tables | The Eater repo and its inbox path live on the instructor VM, absent on this checkout. AF honors the **named contract** (the `data/handoff/*.json` artefact + schema, §0.1) so the bundle is drop-in when the Eater is mounted. AF does **not** run the Eater's pipeline — `track2_hub.html:102`: *"AF's contract with AE is the job bundle and its metadata, not the extraction result."* |
 | **Abstract API clients** | `SemanticScholarClient` / `CrossRefClient` / `PubMedClient` in `Article_Eater/src/services/paper_fetcher.py` (rubric `t2_task3.html`) | local functions `fetch_s2()` / `fetch_crossref()` / `fetch_pubmed()` / `fetch_openalex()` in `abstract_collector.py` | The Article_Eater working tree is absent on this checkout (its `.git` checks out empty — verified). The local fetchers hit the same public endpoints (S2 graph API, CrossRef works, NCBI EFetch, OpenAlex) with the same DOI→abstract contract, gated behind `--enable-network` so the default run is deterministic/offline. Drop-in swap when the AE clients are importable. |
 
-Default demo run command: `python3 task3/run_pipeline.py --backend mock --include-edge-case`.
+Default demo run command: `python3 task3/run_pipeline.py --backend mock --per-query 10 --top-n 10`.
 
 Manual artifacts required: **none** for Task 3 — every check is automated by `task3/tests_task2_task3.py`.
 
@@ -74,7 +89,10 @@ returning `mode="local_substitute"`):
   `AE_ACK_TIMEOUT>0` we poll for AE to consume it (file moved out, or a
   `<name>.ack` / `processed/<name>` marker).
 
-Run the gated smoke test on a machine that HAS Article Eater:
+Real AE integration requires more than the local artefact: mount or configure
+the real AE inbox/corpus inventory, deliver the artefact, and verify that AE
+consumes it and reports success through its own status surface. Run the gated
+smoke test on a machine that HAS Article Eater:
 
 ```bash
 AE_INGEST_CMD="python3 /path/to/Article_Eater/scripts/course_scaffolding.py ingest-handoff" \
@@ -312,7 +330,7 @@ Every stage writes a single row to `run_log` with:
 ## H. Success conditions (combined, runnable)
 
 1. `python3 run_pipeline.py --backend mock` runs end-to-end without error.
-2. `tests_task2_task3.py` reports **44/44 PASS** (47/47 with `T2_LIVE=1`).
+2. `tests_task2_task3.py` reports **51/51 PASS** offline; `T2_LIVE=1` adds real network proof checks.
 3. PRISMA `included == accept + edge_case`.
 4. `lifecycle_transitions` has at least one row per `reference_id`.
 5. `v_acquisition_queue` returns 0 rows when no ACCEPT exists; > 0 when ACCEPT exists.
@@ -320,6 +338,25 @@ Every stage writes a single row to `run_log` with:
 7. SerpAPI key, if set, is read only via `os.environ.get("SERPAPI_API_KEY")`. Never logged.
 8. No row in `article_references` has `triage_stage='abstract_collected'` AND `triage_decision IS NULL` after a triage run.
 9. `removed_at_metadata + abstracts_collected = records_returned` in PRISMA.
+
+### H.1 Exact verification commands
+
+Run from the `Article_Finder` repo root unless noted:
+
+```bash
+python3 -m pytest task3/tests_task2_task3.py -q
+python3 task3/tests_task2_task3.py
+T2_LIVE=1 python3 task3/tests_task2_task3.py
+python3 scripts/verify_track2_workflow.py
+
+# Task 1, from the sibling Knowledge_Atlas repo:
+KA_ATLAS_SHARED_SRC=/path/to/atlas_shared/src python3 data/test_pdfs/validate_task1.py
+```
+
+`task3/tests_task2_task3.py` uses a per-run `$TRACK2_DB` and `$TRACK2_OUT`
+temp directory for the pipeline test, so repeated or parallel test runs do not
+share mutable SQLite state. Manual `task3/run_pipeline.py` runs reset their
+configured DB at step 0.
 
 ---
 
@@ -340,4 +377,4 @@ Every stage writes a single row to `run_log` with:
 - [x] dashboard counts match a separate manual GROUP BY (test PASS)
 - [x] one paper traceable end-to-end (`docs/END_TO_END_TRACE.md`)
 
-Run: `python3 task3/tests_task2_task3.py` → **44/44 PASS** (47/47 with `T2_LIVE=1`; covers Task 2 + Task 3).
+Run: `python3 task3/tests_task2_task3.py` → **51/51 PASS** offline; `T2_LIVE=1` adds real abstract and OA-PDF checks.

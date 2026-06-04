@@ -4,7 +4,10 @@ Author: Dhruv Sood · Branch: `track2/dhruv-sood` · Updated: 2026-06-03
 
 This is the grader's entry point. It declares (1) exactly how the one external
 dependency must be supplied, (2) the verifier commands, and (3) which files are
-the deliverable surface vs. support / generated / inherited material.
+the deliverable surface vs. support / generated / inherited material. The local
+COGS160 sibling layout used during remediation was:
+`Article_Finder/`, `Knowledge_Atlas/`, `atlas_shared/`, and `Article_Eater/`
+under one parent directory.
 
 ---
 
@@ -22,8 +25,9 @@ in `atlas_shared` (a shared course module, per the assignment setup). It is the
 
 Resolution order in code (`abstract_triage.py`, `gap_extractor.py`,
 `Knowledge_Atlas/data/test_pdfs/validate_task1.py`): **installed → `$KA_ATLAS_SHARED_SRC` → sibling**.
-If none resolve, Task 1 SKIPs cleanly (exit 0) with instructions; Task 2/3 surface a clear error.
-No `/private/tmp` or other absolute-path assumptions remain.
+If none resolve, Task 1 SKIPs cleanly (exit 0) with setup instructions; Task 2/3
+use bundled fixtures where possible and otherwise surface a clear environment
+error. No `/private/tmp` or other absolute-path assumptions remain.
 
 The two **data** files `atlas_shared` would otherwise supply are **bundled in this repo**
 at `task3/fixtures/` (`question_constitutions_starter.json`, `mechanisms.json`), so no
@@ -35,10 +39,10 @@ sibling `Knowledge_Atlas` checkout is needed for Task 2/3. Override with
 ## 2. Verifier commands
 
 ```bash
-# --- Article_Finder (Tasks 2 & 3) — from the Article_Finder repo root ---
+# --- Article_Finder (Tasks 2 & 3) — run from the Article_Finder repo root ---
 python3 -m pytest task3/tests_task2_task3.py -q     # collects + passes (1 passed)
-python3 task3/tests_task2_task3.py                  # 44/44 offline (deterministic, isolated temp DB)
-T2_LIVE=1 python3 task3/tests_task2_task3.py         # 47/47 — real abstract + real OA PDF
+python3 task3/tests_task2_task3.py                  # 51/51 offline (deterministic, isolated temp DB)
+T2_LIVE=1 python3 task3/tests_task2_task3.py         # opt-in real abstract + real OA PDF checks
 python3 scripts/verify_track2_workflow.py            # CHAIN 9/9 (incl. handoff + AE-consume)
 
 # --- Knowledge_Atlas (Task 1) — needs atlas_shared (declared above) ---
@@ -46,9 +50,10 @@ KA_ATLAS_SHARED_SRC=/path/to/atlas_shared/src python3 data/test_pdfs/validate_ta
 ```
 
 **Test isolation:** the Task 3 suite runs the pipeline against a per-run temp DB
-(`$TRACK2_DB`) and temp outputs (`$TRACK2_OUT`); repeated or parallel runs never
-share SQLite state and never modify the committed `task3/data/` tree. No reset
-step required.
+(`$TRACK2_DB`) and temp outputs (`$TRACK2_OUT`); repeated or parallel test runs
+do not share SQLite state and do not depend on the committed `task3/data/` tree.
+For a manual non-test run, `task3/run_pipeline.py` still resets the configured DB
+at step 0.
 
 ---
 
@@ -67,10 +72,12 @@ step required.
 | `task3/prisma_dashboard.py` | Task 3 — PRISMA funnel from a single SQL `GROUP BY` |
 | `task3/ae_handoff.py` | Task 3 — Article Eater handoff artefact writer (local substitute) |
 | `task3/db_schema.py` | Task 3 — schema, `article_references`, lifecycle, views |
-| `task3/tests_task2_task3.py` | Task 2+3 automated checklist (44/44 · 47/47 live) |
+| `task3/tests_task2_task3.py` | Task 2+3 automated checklist (51/51 offline; live checks opt-in) |
 | `scripts/verify_track2_workflow.py` | one-command chain verifier (9/9) |
 | `Knowledge_Atlas/ka_article_endpoints.py` + `ka_contribute_public.html` | Task 1 — contribute page |
 | `Knowledge_Atlas/data/test_pdfs/validate_task1.py` | Task 1 validator (42/42) |
+| `Article_Eater/contracts/ae_af/CLAUDE_HANDOFF_PROMPT.md` | downstream AE bundle contract used to state the real-ingestion boundary |
+| `Article_Eater/src/services/voi_search.py` | downstream AE VOI reference used by `TRACK2_VOI_COMPARISON.md` |
 
 ### Support fixtures (small, committed on purpose)
 - `task3/fixtures/question_constitutions_starter.json`, `task3/fixtures/mechanisms.json` — bundled
@@ -86,7 +93,7 @@ step required.
 ### Contracts & docs (supporting)
 - `task3/docs/TASK3_CONTRACT.md`, `docs/GAP_EXTRACTOR_CONTRACT_TASK2.md`, `docs/QUERY_GENERATOR_CONTRACT_TASK2.md`
 - `docs/module_deliverable/` — sprint diagram, box specs, self-audit, VOI comparison
-- `TRACK2_VOI_COMPARISON.md` — Track 2 heuristic VOI vs Article Eater/BN VOI
+- `TRACK2_VOI_COMPARISON.md` / `VOI_COMPARISON.md` — Track 2 heuristic VOI vs Article Eater/BN VOI
 
 ### Inherited / unmodified scaffolding (NOT part of this deliverable)
 - `article_finder_v2/`, `cli/`, `core/`, `ui/`, `search/`, `ingest/`, and other pre-existing Article Finder
@@ -98,9 +105,10 @@ step required.
 - **Article Eater handoff** is a documented **local substitute** (`ae_handoff.py` writes
   `data/handoff/*.json`; `ae_inbox_stub.py` validates it). The **real delivery seam is built**
   (`ae_handoff.deliver_to_ae()` + `task3/ae_ingest_smoke.py`): on a machine with AE, set
-  `AE_INGEST_CMD` or `AE_INBOX` and it performs a real ingestion; on this checkout (no AE repo)
-  it SKIPs cleanly. The seam mechanics are unit-tested offline. It is **not** a verified
-  ingestion against the real AE here. See `task3/docs/TASK3_CONTRACT.md §0`.
+  `AE_INGEST_CMD` or `AE_INBOX` and it performs a real ingestion; without those settings,
+  it is an honest `local_substitute` no-op. The seam mechanics are unit-tested offline.
+  It is **not** a verified ingestion against the real AE unless AE consumes the artefact and
+  reports success. See `task3/docs/TASK3_CONTRACT.md §0`.
 - **VOI** is a first-stage search-ranking **heuristic**, not the full Article Eater/BN VOI model.
   See `TRACK2_VOI_COMPARISON.md`.
 - **scidownl** stays gated + default-closed (not a live downloader).

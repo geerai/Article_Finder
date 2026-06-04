@@ -22,12 +22,17 @@ A single scalar in [0, 1]. Good for a first pass; deliberately coarse.
 
 ## What the existing Article Eater / BN machinery computes (richer)
 
-| System | File (instructor repos) | Dimensions it separates |
+| System | Local file reviewed | Dimensions it separates |
 |---|---|---|
-| **BN graphical opportunity scorer** | `BN_graphical/src/literature_integration/opportunity_scorer.py` | gap_severity (0.25), contestation (0.20), centrality (0.25), downstream_count (0.20), feasibility (0.10) |
-| **Article Eater VOI search** | `Article_Eater_PostQuinean_v1/src/services/voi_search.py` | **structural_voi** (fill a structural gap) vs **epistemic_voi** (reduce uncertainty); gap-type priority (direction / validation / mechanism / boundary); `combined_voi` with gap-type-dependent alpha |
-| **Active learning coordinator** | `…/services/active_learning_coordinator.py` | bn_uncertainty, bn_estimate, credible_interval, structural_voi, epistemic_voi, priority, search_terms, n_supporting_papers |
-| **Bayesian VOI service** | `…/docs/BAYESIAN_VOI_SERVICE_IMPLEMENTATION.md` | prior credence + uncertainty, likelihood by design type, expected information gain, expected utility gain, expected posterior change |
+| **Article Eater VOI search** | `../Article_Eater/src/services/voi_search.py` | **structural_voi** (counterfactual/coherence value of filling a structural gap) vs **epistemic_voi** (uncertainty reduction weighted by belief importance); gap-type priority (direction / validation / mechanism / boundary); combined VOI with gap-type-dependent alpha |
+| **Article Eater research queue contract** | `../Article_Eater/contracts/research_queue.contract.md` | prioritized research targets with gap type, theory drivers, VOI score, priority rationale, suggested queries, cross-field terms, target databases, queue status, and closure metrics |
+| **Article Eater paper-level VOI utility** | `../Article_Eater/src/cmr/voi_scoring.py` | finding-level VOI buckets for contradiction, gap, extension, and confirmation; aggregate paper-level expected information gain |
+| **AE/AF bundle contract** | `../Article_Eater/contracts/ae_af/CLAUDE_HANDOFF_PROMPT.md` | not a VOI scorer, but it defines what real AE consumption means: AF creates an input bundle, AE produces `result.json` and extraction artifacts, and AF reads AE status rather than assuming success from a local file |
+
+The earlier review also mentioned BN-style opportunity scoring dimensions
+(`gap_severity`, `contestation`, `centrality`, `downstream_count`,
+`feasibility`). Those are the correct conceptual comparison points even when
+that separate BN repo is not mounted in this local COGS160 checkout.
 
 ## The cases the Track 2 scalar collapses (and the richer model distinguishes)
 - A gap may be **uncertain but peripheral** (Track 2 over-ranks it).
@@ -44,6 +49,12 @@ central.* The first is decision-theoretic; the second is a retrieval-priority he
 Use the Track 2 score as a **first-stage filter** over candidate search targets, **then**
 defer to Article Eater / BN VOI for the final "which articles are most worth finding"
 decision. Do not treat the scalar as the system VOI.
+
+The clean future integration is to replace the `null` placeholders in
+`voi_breakdown` by calling Article Eater's VOI services once the real AE/BN graph
+is mounted. Until then, the Track 2 score is intentionally local: it chooses
+which weak mechanism gaps to search first; it does not estimate expected
+posterior change, downstream coherence impact, or study feasibility.
 
 ## Implemented now: `voi_breakdown` (transparency, not a claim of full VOI)
 `gap_extractor.py` now emits a `voi_breakdown` object on every gap that names which

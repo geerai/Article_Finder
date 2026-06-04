@@ -39,7 +39,7 @@ Runs both per-task suites and asserts the last-mile handoff end-to-end. Current 
 | Suite | Result |
 |---|---|
 | Task 1 — `Knowledge_Atlas/data/test_pdfs/validate_task1.py` | **42/42** |
-| Task 2 + 3 — `Article_Finder/task3/tests_task2_task3.py` | **44/44** (47/47 with `T2_LIVE=1`) |
+| Task 2 + 3 — `Article_Finder/task3/tests_task2_task3.py` | **51/51** offline; live checks opt-in with `T2_LIVE=1` |
 | Chain + handoff — `Article_Finder/scripts/verify_track2_workflow.py` | **9/9** |
 
 **Instructor-review round (see [RUTHLESS_PROMPT_SELFAUDIT.md](RUTHLESS_PROMPT_SELFAUDIT.md) for the full 10-point map):**
