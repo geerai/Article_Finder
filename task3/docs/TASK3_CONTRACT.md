@@ -77,10 +77,14 @@ and records each write once in the `handoff_log` table (`UNIQUE(reference_id)`).
 / `article_eater_failed` are the Eater's downstream states. AF's terminal stage is
 `handed_off`.
 
-**Real Article Eater integration — the seam IS built; it just needs a real AE to
-point at.** `ae_handoff.deliver_to_ae()` delivers an artefact to a real AE in one
-of two configured modes (no faking — if neither is set it is an honest no-op
-returning `mode="local_substitute"`):
+**AE boundary sentence:** this implementation writes and validates a local
+Article Eater handoff artefact; it does not prove real Article Eater ingestion
+unless a configured AE process consumes that artefact and reports success through
+its own status surface.
+
+`ae_handoff.deliver_to_ae()` is the delivery seam. It can attempt real delivery
+in one of two configured modes; if neither is set, it returns an honest no-op
+with `mode="local_substitute"`:
 
 - `AE_INGEST_CMD="<cmd>"` — we run `<cmd> <artefact.json>`; AE consuming the
   artefact == the command exiting 0 (e.g. the instructor's
@@ -89,14 +93,14 @@ returning `mode="local_substitute"`):
   `AE_ACK_TIMEOUT>0` we poll for AE to consume it (file moved out, or a
   `<name>.ack` / `processed/<name>` marker).
 
-Real AE integration requires more than the local artefact: mount or configure
-the real AE inbox/corpus inventory, deliver the artefact, and verify that AE
-consumes it and reports success through its own status surface. Run the gated
-smoke test on a machine that HAS Article Eater:
+Real AE integration therefore requires more than the local artefact: mount or
+configure the real AE inbox/corpus inventory, deliver the artefact, and verify
+that AE consumed it and reported success. Run the gated smoke test on a machine
+that HAS Article Eater:
 
 ```bash
 AE_INGEST_CMD="python3 /path/to/Article_Eater/scripts/course_scaffolding.py ingest-handoff" \
-    python3 task3/ae_ingest_smoke.py      # -> REAL AE INGESTION VERIFIED
+    python3 task3/ae_ingest_smoke.py      # verifies real AE ingestion only if AE consumes the artefact
 # or
 AE_INBOX=/path/to/Article_Eater/data/inbox AE_ACK_TIMEOUT=15 python3 task3/ae_ingest_smoke.py
 ```

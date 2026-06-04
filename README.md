@@ -51,12 +51,13 @@ Live network proof is opt-in:
 T2_LIVE=1 python3 task3/tests_task2_task3.py
 ```
 
-Product boundary: Article Finder currently writes and validates a local Article
-Eater handoff artefact. Real AE ingestion requires configuring `AE_INGEST_CMD`
-or `AE_INBOX` so Article Eater consumes the artefact and reports success through
-its own status surface. The current VOI score is a first-stage search-ranking
-heuristic; see [`TRACK2_VOI_COMPARISON.md`](TRACK2_VOI_COMPARISON.md) for the
-comparison to Article Eater's richer structural/epistemic VOI.
+Product boundary: Article Finder currently produces a local Article Eater
+handoff artefact; it does not by itself prove that Article Eater ingested the
+paper. Real AE integration requires configuring `AE_INGEST_CMD` or `AE_INBOX`,
+then verifying that Article Eater consumes the artefact and reports success
+through its own status surface. The current VOI score is a first-stage
+search-ranking heuristic; see [`TRACK2_VOI_COMPARISON.md`](TRACK2_VOI_COMPARISON.md)
+for the comparison to Article Eater's richer structural/epistemic VOI.
 
 ## What's New in v3.2.3
 
